@@ -220,6 +220,70 @@ void Skeleton::_update_process_order() {
 	process_order_dirty = false;
 }
 
+Transform Skeleton::compute_global_pose(const Bone &p_bone, const Bone *p_bonesptr, bool p_ignore_override) const {
+	if (!p_ignore_override && p_bone.global_pose_override_amount >= (1.0 - CMP_EPSILON)) {
+		return p_bone.global_pose_override;
+	} else {
+		if (p_bone.disable_rest) {
+			if (p_bone.enabled) {
+
+				Transform pose = p_bone.pose;
+				if (p_bone.custom_pose_enable) {
+					pose = p_bone.custom_pose * pose;
+				}
+				if (p_bone.parent >= 0) {
+
+					return p_bonesptr[p_bone.parent].pose_global * pose;
+				} else {
+
+					return pose;
+				}
+			} else {
+
+				if (p_bone.parent >= 0) {
+
+					return p_bonesptr[p_bone.parent].pose_global;
+				} else {
+
+					return Transform();
+				}
+			}
+
+		} else {
+			if (p_bone.enabled) {
+
+				Transform pose = p_bone.pose;
+				if (p_bone.custom_pose_enable) {
+					pose = p_bone.custom_pose * pose;
+				}
+				if (p_bone.parent >= 0) {
+
+					return p_bonesptr[p_bone.parent].pose_global * (p_bone.rest * pose);
+				} else {
+
+					return p_bone.rest * pose;
+				}
+			} else {
+
+				if (p_bone.parent >= 0) {
+
+					return p_bonesptr[p_bone.parent].pose_global * p_bone.rest;
+				} else {
+
+					return p_bone.rest;
+				}
+			}
+		}
+
+		if (!p_ignore_override && p_bone.global_pose_override_amount >= CMP_EPSILON) {
+			return p_bone.pose_global.interpolate_with(p_bone.global_pose_override, p_bone.global_pose_override_amount);
+		}
+	}
+
+	// We cant reach here, but make the compiler happy
+	return Transform();
+}
+
 void Skeleton::_notification(int p_what) {
 
 	switch (p_what) {
@@ -238,64 +302,7 @@ void Skeleton::_notification(int p_what) {
 
 				Bone &b = bonesptr[order[i]];
 
-				if (b.global_pose_override_amount >= 0.999) {
-					b.pose_global = b.global_pose_override;
-				} else {
-					if (b.disable_rest) {
-						if (b.enabled) {
-
-							Transform pose = b.pose;
-							if (b.custom_pose_enable) {
-								pose = b.custom_pose * pose;
-							}
-							if (b.parent >= 0) {
-
-								b.pose_global = bonesptr[b.parent].pose_global * pose;
-							} else {
-
-								b.pose_global = pose;
-							}
-						} else {
-
-							if (b.parent >= 0) {
-
-								b.pose_global = bonesptr[b.parent].pose_global;
-							} else {
-
-								b.pose_global = Transform();
-							}
-						}
-
-					} else {
-						if (b.enabled) {
-
-							Transform pose = b.pose;
-							if (b.custom_pose_enable) {
-								pose = b.custom_pose * pose;
-							}
-							if (b.parent >= 0) {
-
-								b.pose_global = bonesptr[b.parent].pose_global * (b.rest * pose);
-							} else {
-
-								b.pose_global = b.rest * pose;
-							}
-						} else {
-
-							if (b.parent >= 0) {
-
-								b.pose_global = bonesptr[b.parent].pose_global * b.rest;
-							} else {
-
-								b.pose_global = b.rest;
-							}
-						}
-					}
-
-					if (b.global_pose_override_amount >= CMP_EPSILON) {
-						b.pose_global = b.pose_global.interpolate_with(b.global_pose_override, b.global_pose_override_amount);
-					}
-				}
+				b.pose_global = compute_global_pose(b, bonesptr, false);
 
 				if (b.global_pose_override_reset) {
 					b.global_pose_override_amount = 0.0;
@@ -350,6 +357,22 @@ Transform Skeleton::get_bone_global_pose(int p_bone) const {
 	if (dirty)
 		const_cast<Skeleton *>(this)->notification(NOTIFICATION_UPDATE_SKELETON);
 	return bones[p_bone].pose_global;
+}
+
+Transform Skeleton::get_bone_global_pose_without_override(int p_bone) const {
+
+	ERR_FAIL_INDEX_V(p_bone, bones.size(), Transform());
+	if (dirty)
+		const_cast<Skeleton *>(this)->notification(NOTIFICATION_UPDATE_SKELETON);
+
+	const Bone &b = bones[p_bone];
+
+	if (b.global_pose_override_amount == 0.0)
+		return b.pose_global;
+
+	const Bone *bonesptr = bones.ptr();
+
+	return compute_global_pose(b, bonesptr, true);
 }
 
 // skeleton creation api
@@ -830,6 +853,7 @@ void Skeleton::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_bone_global_pose_override", "bone_idx", "pose", "amount", "persistent"), &Skeleton::set_bone_global_pose_override, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("get_bone_global_pose", "bone_idx"), &Skeleton::get_bone_global_pose);
+	ClassDB::bind_method(D_METHOD("get_bone_global_pose_without_override", "bone_idx"), &Skeleton::get_bone_global_pose_without_override);
 
 	ClassDB::bind_method(D_METHOD("get_bone_custom_pose", "bone_idx"), &Skeleton::get_bone_custom_pose);
 	ClassDB::bind_method(D_METHOD("set_bone_custom_pose", "bone_idx", "custom_pose"), &Skeleton::set_bone_custom_pose);
