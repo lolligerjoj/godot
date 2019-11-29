@@ -221,67 +221,66 @@ void Skeleton::_update_process_order() {
 }
 
 Transform Skeleton::compute_global_pose(const Bone &p_bone, const Bone *p_bonesptr, bool p_ignore_override) const {
+
 	if (!p_ignore_override && p_bone.global_pose_override_amount >= (1.0 - CMP_EPSILON)) {
 		return p_bone.global_pose_override;
-	} else {
-		if (p_bone.disable_rest) {
-			if (p_bone.enabled) {
+	}
 
-				Transform pose = p_bone.pose;
-				if (p_bone.custom_pose_enable) {
-					pose = p_bone.custom_pose * pose;
-				}
-				if (p_bone.parent >= 0) {
+	Transform tform;
 
-					return p_bonesptr[p_bone.parent].pose_global * pose;
-				} else {
+	if (p_bone.disable_rest) {
+		if (p_bone.enabled) {
 
-					return pose;
-				}
-			} else {
-
-				if (p_bone.parent >= 0) {
-
-					return p_bonesptr[p_bone.parent].pose_global;
-				} else {
-
-					return Transform();
-				}
+			Transform pose = p_bone.pose;
+			if (p_bone.custom_pose_enable) {
+				pose = p_bone.custom_pose * pose;
 			}
+			if (p_bone.parent >= 0) {
 
-		} else {
-			if (p_bone.enabled) {
-
-				Transform pose = p_bone.pose;
-				if (p_bone.custom_pose_enable) {
-					pose = p_bone.custom_pose * pose;
-				}
-				if (p_bone.parent >= 0) {
-
-					return p_bonesptr[p_bone.parent].pose_global * (p_bone.rest * pose);
-				} else {
-
-					return p_bone.rest * pose;
-				}
+				tform = p_bonesptr[p_bone.parent].pose_global * pose;
 			} else {
 
-				if (p_bone.parent >= 0) {
+				tform = pose;
+			}
+		} else {
 
-					return p_bonesptr[p_bone.parent].pose_global * p_bone.rest;
-				} else {
+			if (p_bone.parent >= 0) {
 
-					return p_bone.rest;
-				}
+				tform = p_bonesptr[p_bone.parent].pose_global;
 			}
 		}
 
-		if (!p_ignore_override && p_bone.global_pose_override_amount >= CMP_EPSILON) {
-			return p_bone.pose_global.interpolate_with(p_bone.global_pose_override, p_bone.global_pose_override_amount);
+	} else {
+		if (p_bone.enabled) {
+
+			Transform pose = p_bone.pose;
+			if (p_bone.custom_pose_enable) {
+				pose = p_bone.custom_pose * pose;
+			}
+			if (p_bone.parent >= 0) {
+
+				tform = p_bonesptr[p_bone.parent].pose_global * (p_bone.rest * pose);
+			} else {
+
+				tform = p_bone.rest * pose;
+			}
+		} else {
+
+			if (p_bone.parent >= 0) {
+
+				tform = p_bonesptr[p_bone.parent].pose_global * p_bone.rest;
+			} else {
+
+				tform = p_bone.rest;
+			}
 		}
 	}
 
-	// We cant reach here, but make the compiler happy
-	return Transform();
+	if (!p_ignore_override && p_bone.global_pose_override_amount >= CMP_EPSILON) {
+		tform = tform.interpolate_with(p_bone.global_pose_override, p_bone.global_pose_override_amount);
+	}
+
+	return tform;
 }
 
 void Skeleton::_notification(int p_what) {
