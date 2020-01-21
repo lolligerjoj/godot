@@ -585,7 +585,8 @@ AnimationNodeBlendSpace2D::TriangleWeights AnimationNodeBlendSpace2D::get_triang
 	for (int j = 0; j < 3; j++) {
 		t_weights.points[j] = get_triangle_point(t_weights.triangle, j);
 	}
-
+   printf("points:\t %d \t %d \t %d\n",get_triangle_point(t_weights.triangle,0),get_triangle_point(t_weights.triangle,1),get_triangle_point(t_weights.triangle,2));
+   printf("weights:\t %f \t %f \t %f\n",t_weights.weights[0],t_weights.weights[1],t_weights.weights[2]);
 	return t_weights;
 }
 

@@ -35,6 +35,7 @@
 #include "core/method_bind_ext.gen.inc"
 #include "scene/scene_string_names.h"
 #include "servers/audio/audio_stream.h"
+#include <iostream>
 
 void AnimationNode::get_parameter_list(List<PropertyInfo> *r_list) const {
 	if (get_script_instance()) {
@@ -115,6 +116,13 @@ void AnimationNode::blend_animation(const StringName &p_animation, float p_time,
 	anim_state.time = p_time;
 	anim_state.animation = animation;
 	anim_state.seeked = p_seeked;
+
+   size_t n=sizeof(blends)/sizeof(blends[0]);
+   std::cout << "blend_animation_state: "<<p_animation << ' ';
+   for (size_t i=0; i<n; i++) {
+      std::cout << blends[i] << " ";
+   }
+   std::cout << '\n';
 
 	state->animation_states.push_back(anim_state);
 }
