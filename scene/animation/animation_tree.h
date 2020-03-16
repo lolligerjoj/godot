@@ -131,6 +131,7 @@ public:
 
 	virtual float process(float p_time, bool p_seek);
 	virtual String get_caption() const;
+	virtual float get_length();
 
 	int get_input_count() const;
 	String get_input_name(int p_input);
@@ -138,6 +139,7 @@ public:
 	void add_input(const String &p_name);
 	void set_input_name(int p_input, const String &p_name);
 	void remove_input(int p_index);
+	float get_input_length(int p_input);
 
 	void set_filter_path(const NodePath &p_path, bool p_enable);
 	bool is_path_filtered(const NodePath &p_path) const;

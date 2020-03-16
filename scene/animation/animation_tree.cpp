@@ -145,6 +145,35 @@ void AnimationNode::make_invalid(const String &p_reason) {
 	state->invalid_reasons += "- " + p_reason;
 }
 
+float AnimationNode::get_input_length(int p_input) {
+	ERR_FAIL_COND_V(!state, 0);
+
+	AnimationNodeBlendTree *blend_tree = Object::cast_to<AnimationNodeBlendTree>(parent);
+	ERR_FAIL_COND_V(!blend_tree, 0);
+
+	StringName node_name = connections[p_input];
+
+	if (!blend_tree->has_node(node_name)) {
+		String name = blend_tree->get_node_name(Ref<AnimationNode>(this));
+		make_invalid(vformat(RTR("Nothing connected to input '%s' of node '%s'."), get_input_name(p_input), name));
+		return 0;
+	}
+
+	Ref<AnimationNode> node = blend_tree->get_node(node_name);
+
+	return node->get_length();
+
+}
+
+float AnimationNode::get_length() {
+
+	if (get_script_instance()) {
+		return get_script_instance()->call("length");
+	}
+
+	return -1;
+}
+
 float AnimationNode::blend_input(int p_input, float p_time, bool p_seek, float p_blend, FilterAction p_filter, bool p_optimize) {
 	ERR_FAIL_INDEX_V(p_input, inputs.size(), 0);
 	ERR_FAIL_COND_V(!state, 0);
@@ -423,6 +452,8 @@ void AnimationNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("blend_node", "name", "node", "time", "seek", "blend", "filter", "optimize"), &AnimationNode::blend_node, DEFVAL(FILTER_IGNORE), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("blend_input", "input_index", "time", "seek", "blend", "filter", "optimize"), &AnimationNode::blend_input, DEFVAL(FILTER_IGNORE), DEFVAL(true));
 
+	ClassDB::bind_method(D_METHOD("get_input_length", "input_index"), &AnimationNode::get_input_length);
+
 	ClassDB::bind_method(D_METHOD("set_parameter", "name", "value"), &AnimationNode::set_parameter);
 	ClassDB::bind_method(D_METHOD("get_parameter", "name"), &AnimationNode::get_parameter);
 
@@ -438,8 +469,9 @@ void AnimationNode::_bind_methods() {
 		BIND_VMETHOD(mi);
 	}
 	BIND_VMETHOD(MethodInfo("process", PropertyInfo(Variant::REAL, "time"), PropertyInfo(Variant::BOOL, "seek")));
-	BIND_VMETHOD(MethodInfo(Variant::STRING, "get_caption"));
+	BIND_VMETHOD(MethodInfo("get_caption"));
 	BIND_VMETHOD(MethodInfo(Variant::STRING, "has_filter"));
+	BIND_VMETHOD(MethodInfo(Variant::REAL, "get_length"));
 
 	ADD_SIGNAL(MethodInfo("removed_from_graph"));
 

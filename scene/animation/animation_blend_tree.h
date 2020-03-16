@@ -59,6 +59,8 @@ public:
 	void set_animation(const StringName &p_name);
 	StringName get_animation() const;
 
+	float get_length();
+
 	AnimationNodeAnimation();
 };
 
