@@ -67,26 +67,7 @@ void AnimationNodeAnimation::_validate_property(PropertyInfo &property) const {
 
 float AnimationNodeAnimation::get_length() {
 
-	AnimationPlayer *ap = state->player;
-	ERR_FAIL_COND_V(!ap, 0);
-
-	if (!ap->has_animation(animation)) {
-
-		AnimationNodeBlendTree *tree = Object::cast_to<AnimationNodeBlendTree>(parent);
-		if (tree) {
-			String name = tree->get_node_name(Ref<AnimationNodeAnimation>(this));
-			make_invalid(vformat(RTR("On BlendTree node '%s', animation not found: '%s'"), name, animation));
-
-		} else {
-			make_invalid(vformat(RTR("Animation not found: '%s'"), animation));
-		}
-
-		return 0;
-	}
-
-	Ref<Animation> anim = ap->get_animation(animation);
-
-	return anim->get_length();
+	return anim_size;
 }
 
 float AnimationNodeAnimation::process(float p_time, bool p_seek) {
@@ -122,7 +103,7 @@ float AnimationNodeAnimation::process(float p_time, bool p_seek) {
 		step = p_time;
 	}
 
-	float anim_size = anim->get_length();
+	anim_size = anim->get_length();
 
 	if (anim->has_loop()) {
 
@@ -157,6 +138,7 @@ AnimationNodeAnimation::AnimationNodeAnimation() {
 	last_version = 0;
 	skip = false;
 	time = "time";
+	anim_size = -1;
 }
 
 ////////////////////////////////////////////////////////

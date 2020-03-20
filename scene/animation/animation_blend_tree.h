@@ -39,6 +39,7 @@ class AnimationNodeAnimation : public AnimationRootNode {
 
 	StringName animation;
 	StringName time;
+	float anim_size;
 
 	uint64_t last_version;
 	bool skip;

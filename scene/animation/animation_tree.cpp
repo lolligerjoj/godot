@@ -168,7 +168,7 @@ float AnimationNode::get_input_length(int p_input) {
 float AnimationNode::get_length() {
 
 	if (get_script_instance()) {
-		return get_script_instance()->call("length");
+		return get_script_instance()->call("get_length");
 	}
 
 	return -1;
